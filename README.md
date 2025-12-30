@@ -25,3 +25,5 @@
 
 ## 7. RAG(Retrieval-Augmented Generation) 구조
 이 프로젝트는 실패 사례 데이터를 벡터화 하여 Vector DB에 저장합니다.
+
+https://failrag.streamlit.app/
