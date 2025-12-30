@@ -74,6 +74,7 @@ failure_df = test_df[test_df["Actual"] != test_df["Predicted"]]
 
 st.subheader("실패 사례 요약")
 st.write(f"총 실패 사례 수: **{len(failure_df)}**")
+st.dataframe(failure_df)
 
 # -------------------------
 # 실패 사례 텍스트 생성
@@ -113,7 +114,7 @@ st.subheader("실패 사례 챗봇")
 
 question = st.text_input(
     "실패 사례 기반 질문을 입력하세요",
-    placeholder="예: 고령 고객에서 오분류가 자주 발생하나요?"
+    placeholder="예: 실패 사례 중 제일 높은 나이를 알려주세요."
 )
 
 def retrieve_context(query, k=5):
