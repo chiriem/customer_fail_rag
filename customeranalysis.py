@@ -9,16 +9,14 @@ from sklearn.linear_model import LogisticRegression
 import faiss
 from openai import OpenAI
 
-# -------------------------
+ 
 # 기본 설정
-# -------------------------
 st.set_page_config(page_title="Failure Case Analysis with LLM", layout="wide")
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-# -------------------------
+ 
 # 데이터 로드
-# -------------------------
 @st.cache_data
 def load_data():
     df = pd.read_csv("customerdata.csv")
@@ -34,9 +32,8 @@ df = load_data()
 
 st.title("Failure Case Analysis (Customer Segmentation)")
 
-# -------------------------
+ 
 # 모델 학습
-# -------------------------
 @st.cache_resource
 def train_model(df):
     # RAG용 원본 데이터 (인코딩 전)
@@ -76,18 +73,16 @@ def train_model(df):
 
 test_df, model = train_model(df)
 
-# -------------------------
+ 
 # 실패 사례 추출
-# -------------------------
 failure_df = test_df[test_df["Actual"] != test_df["Predicted"]].copy()
 
 st.subheader("실패 사례 요약")
 st.write(f"총 실패 사례 수: **{len(failure_df)}**")
 st.dataframe(failure_df, use_container_width=True)
 
-# -------------------------
+ 
 # 카테고리 매핑
-# -------------------------
 CATEGORY_MAP = {
     "Gender": {"Male": "남성", "Female": "여성"},
     "Ever_Married": {"Yes": "기혼", "No": "미혼"},
@@ -114,9 +109,8 @@ def generate_failure_text(row):
         f"모델은 {row['Predicted']}로 잘못 예측했다."
     )
 
-# -------------------------
-# (리팩터링) 실패 문서: text + meta
-# -------------------------
+ 
+# 실패 문서: text + meta
 failure_docs = []
 for _, row in failure_df.iterrows():
     failure_docs.append({
@@ -130,10 +124,8 @@ for _, row in failure_df.iterrows():
     })
 
 failure_texts = [d["text"] for d in failure_docs]
-
-# -------------------------
+ 
 # (리팩터링) 전체 실패 분포 요약(앵커)
-# -------------------------
 def summarize_failure_distribution(failure_df, topn=5):
     cols = ["Gender", "Profession", "Spending_Score", "Ever_Married", "Graduated"]
     parts = []
@@ -154,19 +146,9 @@ def summarize_failure_distribution(failure_df, topn=5):
         parts.append(f"- {col}: {txt}")
     return "\n".join(parts)
 
-# -------------------------
-# (리팩터링) 벡터 DB (cosine similarity: normalize + IndexFlatIP)
-# -------------------------
+# 벡터 DB (cosine similarity: normalize + IndexFlatIP)
 @st.cache_resource
 def build_vector_db_with_meta(texts):
-    if len(texts) == 0:
-        # 실패 사례가 없을 경우 대비
-        dummy = np.zeros((1, 1536), dtype="float32")
-        faiss.normalize_L2(dummy)
-        index = faiss.IndexFlatIP(dummy.shape[1])
-        index.add(dummy)
-        return index, dummy
-
     embs = []
     for t in texts:
         emb = client.embeddings.create(
@@ -299,9 +281,7 @@ def retrieve_context_diverse(query, k_final=12, k_search=60):
 """
     return context
 
-# -------------------------
 # 실패 사례 챗봇
-# -------------------------
 st.subheader("실패 사례 챗봇")
 
 question = st.text_input(
@@ -365,8 +345,6 @@ if question:
     st.markdown("### Answer")
     st.write(response.choices[0].message.content)
 
-# -------------------------
 # (옵션) 디버깅/검증용: 실패 분포 요약 표시
-# -------------------------
 with st.expander("디버그: 실패 사례 분포 요약 보기"):
     st.text(summarize_failure_distribution(failure_df))
