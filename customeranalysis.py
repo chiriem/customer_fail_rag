@@ -286,7 +286,7 @@ st.subheader("실패 사례 챗봇")
 
 question = st.text_input(
     "실패 사례 기반 질문을 입력하세요. 실패 케이스에서 일부를 검색하여 대답하기 때문에 통계 관련 질문은 정확한 대답이 어렵습니다.",
-    placeholder="예: 검색된 실패 사례에서 특정 직업군이 많은가요?"
+    placeholder="예: 왜 실패 케이스가 발생했나요?"
 )
 
 if question:
