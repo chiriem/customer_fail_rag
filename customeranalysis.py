@@ -253,7 +253,6 @@ def retrieve_context_diverse(query, k_final=12, k_search=60):
     cand_embs = embeddings[cand_idxs]
 
     # 2) 다양성 강제 선택(MMR + 쿼터)
-    #    - 성별은 최종의 절반 이상 한쪽이 차지하지 않게 제한(데이터가 한쪽뿐이면 자연히 그쪽으로 채워짐)
     #    - 직업은 최종의 1/4 이상 한 직업이 차지하지 않게 제한
     max_per_gender = max(1, k_final // 2)
     max_per_profession = max(1, k_final // 4)
@@ -284,7 +283,7 @@ def retrieve_context_diverse(query, k_final=12, k_search=60):
 st.subheader("실패 사례 챗봇")
 
 question = st.text_input(
-    "실패 사례 기반 질문을 입력하세요. 실패 케이스에서 일부를 검색하여 대답하기 때문에 통계 관련 질문은 정확한 대답이 어렵습니다.",
+    "실패 사례 기반 질문을 입력하세요. 실패 케이스에서 일부를 검색하여 대답합니다.",
     placeholder="예: 왜 실패 케이스가 발생했나요?"
 )
 
