@@ -31,7 +31,6 @@ def load_data():
 df = load_data()
 
 st.title("Failure Case Analysis (Customer Segmentation)")
-
  
 # 모델 학습
 @st.cache_resource
@@ -42,11 +41,12 @@ def train_model(df):
 
     # ML용 데이터 (인코딩 후)
     X_encoded = X_raw.copy()
+    
+    le = LabelEncoder()
 
     # 범주형 인코딩
     cat_cols = X_encoded.select_dtypes(include="object").columns
     for col in cat_cols:
-        le = LabelEncoder()
         X_encoded[col] = le.fit_transform(X_encoded[col].astype(str))
 
     # 데이터 분할 (random_state를 고정하여 인덱스 동기화)
@@ -72,6 +72,11 @@ def train_model(df):
     return test_df, model
 
 test_df, model = train_model(df)
+
+st.subheader("학습 테스트 데이터")
+
+st.write(f"테스트 데이터 수: **{len(test_df)}**")
+st.dataframe(test_df.drop("Predicted", axis=1), use_container_width=True)
 
  
 # 실패 사례 추출
@@ -125,8 +130,8 @@ for _, row in failure_df.iterrows():
 
 failure_texts = [d["text"] for d in failure_docs]
  
-# (리팩터링) 전체 실패 분포 요약(앵커)
-def summarize_failure_distribution(failure_df, topn=5):
+# 전체 실패 분포 요약(앵커)
+def summarize_failure_distribution(failure_df):
     cols = ["Gender", "Profession", "Spending_Score", "Ever_Married", "Graduated"]
     parts = []
     for col in cols:
@@ -138,11 +143,8 @@ def summarize_failure_distribution(failure_df, topn=5):
             parts.append(f"- {col}: (값 없음)")
             continue
 
-        top = vc.head(topn)
+        top = vc.head(10)
         txt = ", ".join([f"{k}:{int(v)}({(v/total)*100:.1f}%)" for k, v in top.items()])
-        if len(vc) > topn:
-            rest = int(vc.iloc[topn:].sum())
-            txt += f", 기타:{rest}({(rest/total)*100:.1f}%)"
         parts.append(f"- {col}: {txt}")
     return "\n".join(parts)
 
@@ -237,9 +239,6 @@ def mmr_diverse_select(
     return selected
 
 def retrieve_context_diverse(query, k_final=12, k_search=60):
-    if len(failure_texts) == 0:
-        return "[실패 사례가 없습니다]"
-
     q_emb = client.embeddings.create(
         model="text-embedding-3-small",
         input=query
@@ -295,16 +294,16 @@ if question:
     SYSTEM_PROMPT = """
 당신은 머신러닝 예측 실패 사례를 분석하는 데이터 분석가입니다.
 
-아래에 제공되는 실패 사례 문서를 근거로 분석을 수행하세요.
+아래에 제공되는 실패 사례 문서를 근거로 분석을 수행해주세요.
 
 분석 지침:
-- 가능한 원인 가설을 제시하되, 반드시 문서의 내용과 연결하세요.
-- 문서에 근거가 없는 내용은 "제공된 데이터만으로는 판단하기 어렵다"고 명시하세요.
+- 가능한 원인 가설을 제시하되, 반드시 문서의 내용과 연결해주세요.
+- 문서에 근거가 없는 내용은 "제공된 데이터만으로는 판단하기 어렵다"고 명시해주세요.
 
 추가 규칙(편향 완화):
 - '전체 실패사례 분포 요약'은 전체 failure_df 기준이며, '선택된 실패사례'는 검색된 샘플입니다.
-- 샘플에서 보이는 특징을 전체 특징으로 단정하지 말고, 전체 분포 요약과 비교해 표현하세요.
-- 특정 성별/직업이 "전부"라고 말하려면, 전체 분포 요약에서 100%일 때만 그렇게 표현하세요.
+- 샘플에서 보이는 특징을 전체 특징으로 단정하지 말고, 전체 분포 요약과 비교해 표현해주세요.
+- 특정 성별/직업이 "전부"라고 말하려면, 전체 분포 요약에서 100%일 때만 그렇게 표현해주세요.
 
 답변 형식:
 관찰된 특징
